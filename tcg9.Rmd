@@ -1,0 +1,36 @@
+```{r}
+
+library(rvest)
+library(stringr)   
+library(cluster)
+library(ggplot2)
+library(rvest)
+url <- read_html("http://carsalesbase.com/china-car-sales-data/ford/")
+carmodel <-html_table(url,header=TRUE)[[2]]
+colnames(carmodel)[1] <-"Year"
+df<-data.frame(carmodel)
+df
+#set.seed(123)
+par(mar=rep(0.2,4))
+#irisClusters<- kmeans(df[,c(2,3)],centers = 2)
+irisClusters <- kmeans(df[, 1:2],2, nstart = 20)
+names(irisClusters)
+df$cluster<-as.factor(irisClusters$cluster)
+
+plot(df$Year,df$Ford..All.Models,col=df$cluster,pch=10,cex=1)
+points(irisClusters$centers,col=1:2,pch=3,cex=3,lwd=3)
+fit<-lm(Ford..All.Models~Year,data=df)
+coef(fit)
+summary(fit)
+df$predicted <- predict(fit)  
+df$residuals <- residuals(fit) 
+ggplot(df,aes(x=Year,y=Ford..All.Models))+
+  geom_smooth(method=lm,se=TRUE,color="black") +
+  geom_segment(aes(xend=Year,yend=predicted),alpha=0.8)+
+  geom_point(aes(color=abs(residuals))) +
+  scale_color_continuous(low="red",high="green")+
+  geom_point(aes(y=predicted),shape=1)
+  theme_bw()
+
+```
+
